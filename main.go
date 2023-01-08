@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+
 	// "log"
 	"os"
 
@@ -39,6 +41,13 @@ func main() {
 		os.Exit(3)
 	}
 	fmt.Printf("Albums found: %v\n", albums)
+
+	alb, err := albumByID(2, dbpool)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "album by id failed: %v\n", err)
+		os.Exit(3)
+	}
+	fmt.Printf("Album found: %v\n", alb)
 }
 
 // albumsByArtist queries for albums that have the specified artist name.
@@ -65,4 +74,15 @@ func albumsByArtist(name string, dbpool *pgxpool.Pool) ([]Album, error) {
 	return albums, nil
 }
 
-func albumByID(id int64, dbpool *pgxpool.Pool) (Album, error)
+func albumByID(id int64, dbpool *pgxpool.Pool) (Album, error) {
+	var alb Album
+
+	row := dbpool.QueryRow(context.Background(), "SELECT * FROM album WHERE id=$1", id)
+	if err := row.Scan(&alb.ID, &alb.Title, &alb.Artist, &alb.Price); err != nil {
+		if err == sql.ErrNoRows {
+			return alb, fmt.Errorf("AlbumsByID %d: no such album", id)
+		}
+		return alb, fmt.Errorf("AlbumsByID %d: %v", id, err)
+	}
+	return alb, nil
+}
