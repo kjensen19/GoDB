@@ -48,6 +48,16 @@ func main() {
 		os.Exit(3)
 	}
 	fmt.Printf("Album found: %v\n", alb)
+
+	albID, err := addAlbum(Album{
+		Title:  "The Modern Sound of Betty Carter",
+		Artist: "Betty Carter",
+		Price:  49.99,
+	}, dbpool)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "addAlbum failed: %v\n", err)
+	}
+	fmt.Printf("ID of added album: %v\n", albID)
 }
 
 // albumsByArtist queries for albums that have the specified artist name.
@@ -85,4 +95,14 @@ func albumByID(id int64, dbpool *pgxpool.Pool) (Album, error) {
 		return alb, fmt.Errorf("AlbumsByID %d: %v", id, err)
 	}
 	return alb, nil
+}
+
+func addAlbum(alb Album, dbpool *pgxpool.Pool) (int64, error) {
+	var id int64
+	err := dbpool.QueryRow(context.Background(), "INSERT INTO album (title, artist, price) VALUES ($1, $2, $3) RETURNING id;", alb.Title, alb.Artist, alb.Price).Scan(&id)
+	if err != nil {
+		return 0, fmt.Errorf("addAlbum: %v", err)
+	}
+
+	return id, nil
 }
