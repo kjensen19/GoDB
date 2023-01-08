@@ -18,8 +18,13 @@ type Album struct {
 	Price  float32
 }
 
+// dbpool needs to be passed to other db calls. Type *pgxpool.Pool
+//Environment variable are stored locally (not in .env), unless you use a library
+//os is used to execute Operating System commands (which should have been a clue for .env)
+//Use QueryRow for insert with a returning (in a .Scan() as in addAlbum function)
+
 func main() {
-	//Environment Variables are set in cmd line with $export KEY:VALUE, then
+	//Environment Variables are set in cmd line with $export KEY:VALUE, then⬇️
 	dbpool, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
